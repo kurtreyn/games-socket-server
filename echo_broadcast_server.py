@@ -1,6 +1,6 @@
 import websockets
 import asyncio
-# import json
+import json
 
 PORT = 8001
 connected = set()
@@ -14,9 +14,9 @@ async def echo(websocket):
 	try:
 		async for message in websocket:
 			print(f"Received message from client: {message}")
-			print(f"Websocket: {websocket}")
 
-			# json_formatted_message = json.loads(message)
+			json_formatted_message = json.dumps(message)
+			print(f"JSON: {json_formatted_message}")
 
 			for conn in connected:
 				if conn != websocket:
@@ -24,6 +24,8 @@ async def echo(websocket):
 
 	except websockets.exceptions.ConnectionClosed as ex:
 		print("A client just disconnected")
+	except json.JSONDecodeError:
+		print("Received invalid JSON payload from client. Ignoring.")
 	finally:
 		connected.remove(websocket)
 
