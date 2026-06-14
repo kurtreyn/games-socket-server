@@ -50,7 +50,7 @@ async def chat_handler(websocket):
 				# Parse JSON string into a Python dictionary to read or manipulate it if needed
 				message_data = json.loads(raw_message)
 
-				# We broadcast it exactly as is (it already contains text, type, and timestamp)
+				# Broadcast it exactly as is (it already contains text, type, and timestamp)
 				# but we exclude the sender so they don't get a duplicate echo
 				await broadcast(message_data, exclude_client=websocket)
 
@@ -74,8 +74,8 @@ async def chat_handler(websocket):
 
 async def run_server():
 	# Start the WebSocket server on localhost, port 8001
-	async with websockets.serve(chat_handler, "localhost", 8001):
-		print("WebSocket Chat Server is running on ws://localhost:8001")
+	async with websockets.serve(chat_handler, "127.0.0.1", 8001):
+		print("WebSocket Chat Server is running on ws://127.0.0.1:8001")
 		await asyncio.Future()  # Keeps the server running indefinitely
 
 
