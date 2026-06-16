@@ -11,9 +11,15 @@ class EchoServer:
 		self.connected = set()
 
 	# METHOD to catch Render's Health Checks
-	async def process_request(self, request):
-		# In websockets v14+, request.method is a bytes object (e.g., b"HEAD" or b"GET")
-		# Decoding it to a string makes your logic bulletproof
+	async def process_request(self, *args, **kwargs):
+		# Flexible extraction to handle version argument variations safely
+		# If 2 args are passed, it's (self, request). If 3, it's (self, connection, request).
+		request = args[-1] if args else kwargs.get("request")
+
+		if not request:
+			return None
+
+		# Robust string extraction from bytes or strings
 		method = request.method.decode("utf-8") if isinstance(request.method, bytes) else str(request.method)
 
 		# Intercept HEAD requests (Render Health Checks)
