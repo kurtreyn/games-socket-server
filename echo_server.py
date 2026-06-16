@@ -12,12 +12,16 @@ class EchoServer:
 
 	# METHOD to catch Render's Health Checks
 	async def process_request(self, request):
+		# In websockets v14+, request.method is a bytes object (e.g., b"HEAD" or b"GET")
+		# Decoding it to a string makes your logic bulletproof
+		method = request.method.decode("utf-8") if isinstance(request.method, bytes) else str(request.method)
+
 		# Intercept HEAD requests (Render Health Checks)
-		if request.method == "HEAD":
+		if method == "HEAD":
 			return http.HTTPStatus.OK, [], b""
 
 		# Intercept basic GET requests in case Render hits it with normal HTTP
-		if request.method == "GET" and "upgrade" not in request.headers:
+		if method == "GET" and "upgrade" not in request.headers:
 			return http.HTTPStatus.OK, [], b"Server Running"
 
 		return None  # Let standard WebSocket connections proceed normally
