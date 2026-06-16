@@ -62,5 +62,10 @@ class EchoServer:
 	async def run_server(self):
 		print(f"Server listening on port: {self.port}")
 
-		async with websockets.serve(self.echo, self.host_address, self.port):
+		async with websockets.serve(
+				self.echo, 
+				self.host_address,
+				self.port,
+				process_request=self.process_request
+		):
 			await asyncio.Future()
