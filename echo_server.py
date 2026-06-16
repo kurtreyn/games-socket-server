@@ -12,25 +12,25 @@ class EchoServer:
 
 	# METHOD to catch Render's Health Checks
 	async def process_request(self, *args, **kwargs):
-		# Flexible extraction to handle version argument variations safely
-		# If 2 args are passed, it's (self, request). If 3, it's (self, connection, request).
 		request = args[-1] if args else kwargs.get("request")
-
 		if not request:
 			return None
 
-		# Robust string extraction from bytes or strings
-		method = request.method.decode("utf-8") if isinstance(request.method, bytes) else str(request.method)
+		# Fallback to headers: Render health checks always send specific paths/methods
+		# In websockets v14, headers behaves like a standard dict-like lookup
+		headers = getattr(request, "headers", {})
 
-		# Intercept HEAD requests (Render Health Checks)
-		if method == "HEAD":
-			return http.HTTPStatus.OK, [], b""
+		# Method 1: Check the raw path if available (most reliable way to intercept pings)
+		path = getattr(request, "path", "")
 
-		# Intercept basic GET requests in case Render hits it with normal HTTP
-		if method == "GET" and "upgrade" not in request.headers:
+		# Render's health check pings the root directory "/" with a HEAD request.
+		# Standard users connecting via WebSockets use "ws://..." or "wss://..." with an Upgrade header.
+		if "upgrade" not in headers:
+			# If there's no upgrade header, it's a web probe (like Render's HEAD or GET health checks)
+			# We can safely return 200 OK right here to pass the check!
 			return http.HTTPStatus.OK, [], b"Server Running"
 
-		return None  # Let standard WebSocket connections proceed normally
+		return None  # If "upgrade" is present, let it proceed to normal WebSocket logic
 
 	async def echo(self, websocket):
 		self.connected.add(websocket)
