@@ -11,7 +11,7 @@ class EchoServer:
 		self.connected = set()
 
 	# METHOD to catch Render's Health Checks
-	async def process_request(self, connection, request):
+	async def process_request(self, request):
 		# Intercept HEAD requests (Render Health Checks)
 		if request.method == "HEAD":
 			return http.HTTPStatus.OK, [], b""
@@ -63,7 +63,7 @@ class EchoServer:
 		print(f"Server listening on port: {self.port}")
 
 		async with websockets.serve(
-				self.echo, 
+				self.echo,
 				self.host_address,
 				self.port,
 				process_request=self.process_request
