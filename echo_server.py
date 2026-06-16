@@ -120,6 +120,9 @@ class EchoServer:
 				self.echo,
 				self.host_address,
 				self.port,
-				create_connection=RenderSafeConnection
+				process_request=self.process_request,
+				ping_interval=20,  # Send a ping frame every 20 seconds
+				ping_timeout=20,  # Wait up to 20 seconds for a pong response
+				close_timeout=10  # Time allowed for closing handshake
 		):
 			await asyncio.Future()
