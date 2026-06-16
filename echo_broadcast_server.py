@@ -12,12 +12,13 @@ async def echo(websocket):
 	connected.add(websocket)
 
 	try:
-		async for raw_message in websocket:
-			print(f"Received message from client: {raw_message}")
+		async for raw_json in websocket:
+			print(f"Received message from client: {raw_json}")
+			# raw_json is a valid JSON object
 
 			try:
 				# 1. Parse the raw string into a Python dictionary/list
-				message_data = json.loads(raw_message)
+				message_data = json.loads(raw_json)
 			except json.JSONDecodeError:
 				print("Received invalid JSON payload from client. Ignoring.")
 				continue
@@ -25,18 +26,15 @@ async def echo(websocket):
 			# 2. Extract the "type" field from the message, defaulting to "unknown" if not present
 			message_type = message_data.get("type", "unknown")
 
-			# 3. Use the original raw_message string to broadcast (saves re-encoding)
-			print(f"JSON: {raw_message}")
-
-			json_formatted_message = json.dumps(raw_message)
-			print(f"JSON: {json_formatted_message}")
+			# 3. Use the original raw_json string to broadcast (saves re-encoding)
+			print(f"JSON: {raw_json}")
 
 			for conn in connected:
 				if conn != websocket:
 					if message_type != "chat":
 						print("Not a chat message, skipping broadcast.")
 					else:
-						await conn.send(json_formatted_message)
+						await conn.send(raw_json)
 
 	except websockets.exceptions.ConnectionClosed as ex:
 		print("A client just disconnected")
