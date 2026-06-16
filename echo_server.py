@@ -1,6 +1,8 @@
 import websockets
 import asyncio
 import json
+import http
+
 
 class EchoServer:
 	def __init__(self, port: int, host_address: str):
@@ -8,8 +10,19 @@ class EchoServer:
 		self.host_address = host_address
 		self.connected = set()
 
-	async def echo(self, websocket):
+	# METHOD to catch Render's Health Checks
+	async def process_request(self, connection, request):
+		# Intercept HEAD requests (Render Health Checks)
+		if request.method == "HEAD":
+			return http.HTTPStatus.OK, [], b""
 
+		# Intercept basic GET requests in case Render hits it with normal HTTP
+		if request.method == "GET" and "upgrade" not in request.headers:
+			return http.HTTPStatus.OK, [], b"Server Running"
+
+		return None  # Let standard WebSocket connections proceed normally
+
+	async def echo(self, websocket):
 		self.connected.add(websocket)
 
 		print(f"Connected clients: {len(self.connected)}")
