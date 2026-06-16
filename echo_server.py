@@ -2,6 +2,7 @@ import websockets
 import asyncio
 import json
 import http
+from datetime import datetime
 from websockets.asyncio.server import ServerConnection
 
 
@@ -45,10 +46,37 @@ class EchoServer:
 
 		return None  # If "upgrade" is present, let it proceed to normal WebSocket logic
 
+	async def broadcast(self, message_dict, exclude_client=None):
+		if not self.connected:
+			return
+
+		json_string = json.dumps(message_dict)
+
+		broadcast_task = [
+			client.send(json_string)
+			for client in self.connected
+			if client != exclude_client
+		]
+
+		if broadcast_task:
+			await asyncio.gather(*broadcast_task)
+
 	async def echo(self, websocket):
 		self.connected.add(websocket)
 
 		print(f"Connected clients: {len(self.connected)}")
+
+		# 1. Broadcast the new user notification AND the updated client count
+		await self.broadcast({
+			"type": "notification",
+			"text": "A new user has joined the echo server.",
+			"timeStamp":   datetime.utcnow().isoformat() + "Z"
+		}, exclude_client=websocket)
+
+		await self.broadcast({
+			"type": "user_count",
+			"count": len(self.connected),
+		})
 
 		try:
 			async for raw_json in websocket:
@@ -58,22 +86,19 @@ class EchoServer:
 				try:
 					# 1. Parse the raw string into a Python dictionary/list
 					message_data = json.loads(raw_json)
+
+					# 2. Extract the "type" field from the message, defaulting to "unknown" if not present
+					message_type = message_data.get("type", "unknown")
+
+					if message_type != "chat" and message_type != "notification":
+						print("Not a chat message or notification, skipping broadcast.")
+					else:
+						# Broadcast it exactly as is (it already contains text, type, and timestamp)
+						# but we exclude the sender, so they don't get a duplicate echo
+						await self.broadcast(message_data, exclude_client=websocket)
+
 				except json.JSONDecodeError:
 					print("Received invalid JSON payload from client. Ignoring.")
-					continue
-
-				# 2. Extract the "type" field from the message, defaulting to "unknown" if not present
-				message_type = message_data.get("type", "unknown")
-
-				# 3. Use the original raw_json string to broadcast (saves re-encoding)
-				print(f"JSON: {raw_json}")
-
-				for conn in self.connected:
-					if conn != websocket:
-						if message_type != "chat":
-							print("Not a chat message, skipping broadcast.")
-						else:
-							await conn.send(raw_json)
 
 		except websockets.exceptions.ConnectionClosed as ex:
 			print("A client just disconnected")
@@ -81,6 +106,12 @@ class EchoServer:
 			print("Received invalid JSON payload from client. Ignoring.")
 		finally:
 			self.connected.remove(websocket)
+			print(f"Connected clients remaining: {len(self.connected)}")
+
+			await self.broadcast({
+				"type": "user_count",
+				"count": len(self.connected),
+			})
 
 	async def run_server(self):
 		print(f"Server listening on port: {self.port}")
