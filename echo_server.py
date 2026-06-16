@@ -2,6 +2,19 @@ import websockets
 import asyncio
 import json
 import http
+from websockets.asyncio.server import ServerConnection
+
+
+# 1. Tiny custom protocol to intercept the raw HTTP bytes
+class RenderSafeConnection(ServerConnection):
+    def parse_http_request(self, read_line, headers):
+        try:
+            return super().parse_http_request(read_line, headers)
+        except ValueError as e:
+            # Catching Render's HEAD probe exactly the same way
+            if "got HEAD" in str(e):
+                return http.HTTPStatus.OK, [], b"Server Running"
+            raise e
 
 
 class EchoServer:
@@ -76,6 +89,6 @@ class EchoServer:
 				self.echo,
 				self.host_address,
 				self.port,
-				process_request=self.process_request
+				create_connection=RenderSafeConnection
 		):
 			await asyncio.Future()
