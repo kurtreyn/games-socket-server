@@ -4,6 +4,7 @@ import os
 import uvicorn
 from connection_manager import ConnectionManager
 from chat_manager import ChatManager
+from connect_four_manager import ConnectFourManager
 
 app = FastAPI()
 connection_manager = ConnectionManager()
@@ -24,6 +25,13 @@ async def health_check():
 @app.websocket("/")
 async def websocket_endpoint(websocket: WebSocket):
     await chat_manager.handle_websocket_chat(websocket)
+
+
+@app.websocket("/connect-four")
+async def connect_four_websocket(websocket: WebSocket):
+    connect_four_manager = ConnectFourManager(connection_manager)
+    await connect_four_manager.handle_game(websocket)
+
 
 if __name__ == "__main__":
     if use_localhost:
