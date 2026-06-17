@@ -5,9 +5,11 @@ import os
 import uvicorn
 from datetime import datetime, timezone
 from connection_manager import ConnectionManager
+from chat_manager import ChatManager
 
 app = FastAPI()
-manager = ConnectionManager()
+connection_manager = ConnectionManager()
+chat_manager = ChatManager(connection_manager)
 
 # TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
 use_localhost = False
@@ -23,48 +25,7 @@ async def health_check():
 
 @app.websocket("/")
 async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    print(f"Connected clients: {len(manager.connections)}")
-
-    # Broadcast new user notification and update count
-    await manager.broadcast({
-        "type": "notification",
-        "text": "A new user has joined",
-        "timeStamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    }, exclude=websocket)
-
-    await manager.broadcast({
-        "type": "user_count",
-        "count": len(manager.connections),
-    })
-
-    try:
-        while True:
-            # Receive raw json from the client
-            raw_text = await websocket.receive_text()
-
-            try:
-                message_data = json.loads(raw_text)
-                message_type = message_data.get("type", "unknown")
-
-                if message_type not in ("chat", "notification"):
-                    print("Not a chat message or notification, skipping broadcast")
-                else:
-                    await manager.broadcast(message_data, exclude=websocket)
-
-            except json.JSONDecodeError:
-                print("Received invalid JSON payload from client. Ignoring")
-
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        print(f"A client just disconnected. Remaining clients: {len(manager.connections)}")
-
-        # Broadcast updated user count upon disconnect
-        await manager.broadcast({
-            "type": "user_count",
-            "count": len(manager.connections),
-        })
-
+    await chat_manager.handle_websocket_chat(websocket)
 
 if __name__ == "__main__":
     if use_localhost:
