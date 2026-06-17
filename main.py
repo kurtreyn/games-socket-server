@@ -9,6 +9,9 @@ from connection_manager import ConnectionManager
 app = FastAPI()
 manager = ConnectionManager()
 
+# TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
+use_localhost = False
+
 
 # Handle Render.com health checks
 @app.head("/", response_class=PlainTextResponse)
@@ -62,12 +65,15 @@ async def websocket_endpoint(websocket: WebSocket):
             "count": len(manager.connections),
         })
 
-if __name__ == "__main__":
-    # port = int(os.environ.get("PORT", 10000))
-    # print(f"Starting FastAPI server on port {port}...")
-    # uvicorn.run(app, host="0.0.0.0", port=port)
 
-    # FOR RUNNING LOCALLY
-    port = int(os.environ.get("PORT", 8001))
-    print(f"Starting FastAPI server on port {port}...")
-    uvicorn.run(app, host="localhost", port=port)
+if __name__ == "__main__":
+    if use_localhost:
+        # FOR RUNNING LOCALLY
+        port = int(os.environ.get("PORT", 8001))
+        print(f"Starting FastAPI server on port {port}...")
+        uvicorn.run(app, host="localhost", port=port)
+    else:
+        # FOR RUNNING ON RENDER.COM
+        port = int(os.environ.get("PORT", 10000))
+        print(f"Starting FastAPI server on port {port}...")
+        uvicorn.run(app, host="0.0.0.0", port=port)
