@@ -12,7 +12,7 @@ connection_manager = ConnectionManager()
 chat_manager = ChatManager(connection_manager)
 
 # TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
-use_localhost = True
+use_localhost = False
 
 
 # Handle Render.com health checks
