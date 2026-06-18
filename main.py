@@ -9,6 +9,7 @@ from connect_four_manager import ConnectFourManager
 app = FastAPI()
 connection_manager = ConnectionManager()
 chat_manager = ChatManager(connection_manager)
+connect_four_manager = ConnectFourManager(connection_manager)
 
 # TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
 use_localhost = True
@@ -29,7 +30,6 @@ async def chat_websocket(websocket: WebSocket):
 
 @app.websocket("/connect-four")
 async def connect_four_websocket(websocket: WebSocket):
-    connect_four_manager = ConnectFourManager(connection_manager)
     await connect_four_manager.handle_game(websocket)
 
 
