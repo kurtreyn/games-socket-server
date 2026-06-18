@@ -36,7 +36,13 @@ class ConnectFourManager:
         room_connections.add(websocket)
         print(f"def join_game - room_connections: {room_connections}")
 
+
+
         try:
+            await self.broadcast_to_room(room_connections, {
+                StringEnum.TYPE: StringEnum.PLAYER_JOINED,
+                StringEnum.PLAYER_COUNT: len(room_connections),
+            })
             # Send the first move, in case the first player already played it.
             await self.replay_moves(websocket, join_key)
             # Receive and process moves from the second player.
@@ -122,7 +128,10 @@ class ConnectFourManager:
         # is in progress. If a move is played while replay is running, moves will
         # be sent out of order but each move will be sent once and eventually the
         # UI will be consistent.
-        game_logic = self.JOIN[join_key]
+
+        # Unpack the tuple, pull game_logic out, and ignore the
+        # room_connections set since we don't need it here
+        game_logic, _ = self.JOIN[join_key]
         for player, column, row in game_logic.moves.copy():
             event = {
                 StringEnum.TYPE: StringEnum.MOVE,
@@ -152,7 +161,8 @@ class ConnectFourManager:
             print(f"def - handle_game event: {event}")
 
             # Sanity check the incoming event structure
-            assert event.get(StringEnum.TYPE) == StringEnum.INIT
+            allowed_types = {StringEnum.INIT, StringEnum.JOIN}
+            assert event.get(StringEnum.TYPE) in allowed_types
 
             # 3. Inspect event & route to the appropriate handler based on
             # whether client wants to start a new game or join an existing one

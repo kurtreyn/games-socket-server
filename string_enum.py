@@ -21,3 +21,4 @@ class StringEnum(StrEnum):
     WIN = 'win'
     PLAYER_COUNT = 'player_count'
     RESET = 'reset'
+    PLAYER_JOINED = 'player_joined'
