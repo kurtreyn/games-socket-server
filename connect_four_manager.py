@@ -36,9 +36,8 @@ class ConnectFourManager:
         room_connections.add(websocket)
         print(f"def join_game - room_connections: {room_connections}")
 
-
-
         try:
+            # Update the player count
             await self.broadcast_to_room(room_connections, {
                 StringEnum.TYPE: StringEnum.PLAYER_JOINED,
                 StringEnum.PLAYER_COUNT: len(room_connections),
