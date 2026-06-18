@@ -1,5 +1,4 @@
 from fastapi import WebSocket, WebSocketDisconnect
-from datetime import datetime, timezone
 from connection_manager import ConnectionManager
 from connect_four_game_logic import ConnectFourGameLogic, PLAYER1, PLAYER2
 from string_enum import StringEnum
@@ -52,9 +51,9 @@ class ConnectFourManager:
 
         join_key = secrets.token_urlsafe(12)
         self.JOIN[join_key] = game_logic, room_connections
-        print(f"def start - game_logic: {game_logic}")
-        print(f"def start - join_key: {join_key}")
-        print(f"def start - JOIN[join_key]: {self.JOIN[join_key]}")
+        print(f"def start_game - game_logic: {game_logic}")
+        print(f"def start_game - join_key: {join_key}")
+        print(f"def start_game - JOIN[join_key]: {self.JOIN[join_key]}")
 
         try:
             # Send the secret access tokens to the browser of the first player,
@@ -63,6 +62,7 @@ class ConnectFourManager:
                 StringEnum.TYPE: StringEnum.INIT,
                 StringEnum.JOIN: join_key,
                 StringEnum.JOIN_URL: f"http://localhost:8000/?join=/{join_key}",
+                StringEnum.PLAYER_COUNT: len(room_connections),
             }
             print(f"def start_game - event: {event}")
 

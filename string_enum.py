@@ -19,3 +19,5 @@ class StringEnum(StrEnum):
     JOIN = 'join'
     JOIN_URL = 'join_url'
     WIN = 'win'
+    PLAYER_COUNT = 'player_count'
+    RESET = 'reset'
