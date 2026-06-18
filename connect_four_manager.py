@@ -20,6 +20,8 @@ class ConnectFourManager:
                     message_data = json.loads(raw_text)
                     message_type = message_data.get("type", "unknown")
 
+                    print(f"Received message: {raw_text}")
+
                     if message_type != "move":
                         print("Not a move message, skipping processing")
                         continue

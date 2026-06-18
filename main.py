@@ -11,7 +11,7 @@ connection_manager = ConnectionManager()
 chat_manager = ChatManager(connection_manager)
 
 # TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
-use_localhost = True
+use_localhost = False
 
 
 # Handle Render.com health checks
@@ -22,8 +22,8 @@ async def health_check():
     return "OK"
 
 
-@app.websocket("/")
-async def websocket_endpoint(websocket: WebSocket):
+@app.websocket("/chat")
+async def chat_websocket(websocket: WebSocket):
     await chat_manager.handle_websocket_chat(websocket)
 
 
