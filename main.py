@@ -9,10 +9,10 @@ from connect_four_manager import ConnectFourManager
 app = FastAPI()
 connection_manager = ConnectionManager()
 chat_manager = ChatManager(connection_manager)
-connect_four_manager = ConnectFourManager(connection_manager)
+connect_four_manager = ConnectFourManager()
 
 # TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
-use_localhost = True
+use_production = True
 
 
 # Handle Render.com health checks
@@ -34,13 +34,13 @@ async def connect_four_websocket(websocket: WebSocket):
 
 
 if __name__ == "__main__":
-    if use_localhost:
+    if use_production:
         # FOR RUNNING LOCALLY
-        port = int(os.environ.get("PORT", 8001))
-        print(f"Starting FastAPI server on port {port}...")
-        uvicorn.run(app, host="localhost", port=port)
-    else:
-        # FOR RUNNING ON RENDER.COM
         port = int(os.environ.get("PORT", 10000))
         print(f"Starting FastAPI server on port {port}...")
         uvicorn.run(app, host="0.0.0.0", port=port)
+    else:
+        # FOR RUNNING ON RENDER.COM
+        port = int(os.environ.get("PORT", 8001))
+        print(f"Starting FastAPI server on port {port}...")
+        uvicorn.run(app, host="localhost", port=port)

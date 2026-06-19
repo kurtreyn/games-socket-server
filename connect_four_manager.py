@@ -7,8 +7,7 @@ import secrets
 
 
 class ConnectFourManager:
-    def __init__(self, connection_manager: ConnectionManager):
-        self.connection_manager = connection_manager
+    def __init__(self):
         self.JOIN = {}  # Maps join_key to (game_logic, set of connected websockets)
 
     async def broadcast_to_room(self, room_connections: set, event: dict):
@@ -109,6 +108,7 @@ class ConnectFourManager:
                 print(f"def play - game_logic: {game_logic}")
                 print(f"def play - player: {player}")
                 print(f"def play - room_connections: {room_connections}")
+                print(f"def play - JOIN: {self.JOIN}")
 
                 try:
                     row = game_logic.play(player, column)

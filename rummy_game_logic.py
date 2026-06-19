@@ -1,4 +1,4 @@
-class RummyProcessor:
+class RummyGameLogic:
     def __init__(self):
         suits = ["hearts", "diamonds", "clubs", "spades"]
         ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "jack", "queen", "king", "ace"]
