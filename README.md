@@ -1,16 +1,12 @@
 # Websockets Server
 
-Render.com start command: ```
-uvicorn main:app --host 0.0.0.0 --port $PORT```
+This server is designed to handle websocket connections and manage client interactions using FastAPI's WebSockets.
+Requires `Python 3.11` or higher.
 
 To run locally:
 - Install dependencies: `pip install -r requirements.txt`
-- comment out the three lines in `main.py` under the `if __name__ == "__main__":` block
-- Replace with:
+- In `main.py` change `use_production` to `False`
 
-```
-port = int(os.environ.get("PORT", 8001))
-    print(f"Starting FastAPI server on port {port}...")
-    uvicorn.run(app, host="localhost", port=port)
-```
+Render.com start command: ```
+uvicorn main:app --host 0.0.0.0 --port $PORT```
 
