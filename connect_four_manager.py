@@ -21,8 +21,19 @@ class ConnectFourManager:
 
     async def handle_error(self, websocket: WebSocket, error_message: str):
         await websocket.send_json({
-            "type": "error",
-            "text": error_message,
+            StringEnum.TYPE: StringEnum.ERROR,
+            StringEnum.TEXT: error_message,
+        })
+
+    async def reset_game(self, game_logic: ConnectFourGameLogic, room_connections: set):
+        # Reset the game logic and notify all clients in the room
+        game_logic.moves.clear()
+        game_logic.top = [0 for _ in range(7)]
+        game_logic.winner = None
+
+        await self.broadcast_to_room(room_connections, {
+            StringEnum.TYPE: StringEnum.RESET,
+            StringEnum.TEXT: "The game has been reset.",
         })
 
     async def join_game(self, websocket: WebSocket, join_key: str):
@@ -83,9 +94,16 @@ class ConnectFourManager:
             while True:
                 raw_text = await websocket.receive_text()
                 event = json.loads(raw_text)
+                event_type = event.get(StringEnum.TYPE)
 
-                # Sanity check the incoming event structure
-                assert event.get(StringEnum.TYPE) == StringEnum.MOVE
+                # Check if a player clicked "Play Again" / Reset mid-session
+                if event_type == StringEnum.INIT and StringEnum.RESET in event:
+                    print(f"Reset request received from player {player}")
+                    await self.reset_game(game_logic, room_connections)
+                    continue  # Skip the rest of the loop so it doesn't process as a move
+
+                # Sanity check the incoming event structure for regular gameplay
+                assert event_type == StringEnum.MOVE, f"Expected move event, got {event_type}"
                 column = event[StringEnum.COLUMN]
                 print(f"def play_game - websocket: {websocket}")
                 print(f"def play - game_logic: {game_logic}")
@@ -160,8 +178,7 @@ class ConnectFourManager:
             print(f"def - handle_game event: {event}")
 
             # Sanity check the incoming event structure
-            allowed_types = {StringEnum.INIT, StringEnum.JOIN}
-            assert event.get(StringEnum.TYPE) in allowed_types
+            assert event[StringEnum.TYPE] == StringEnum.INIT
 
             # 3. Inspect event & route to the appropriate handler based on
             # whether client wants to start a new game or join an existing one

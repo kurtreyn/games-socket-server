@@ -2,6 +2,10 @@ __all__ = ["PLAYER1", "PLAYER2", "ConnectFourGameLogic"]
 PLAYER1 = "red"
 PLAYER2 = "yellow"
 
+"""
+        Game logic is from: https://websockets.readthedocs.io/en/stable/intro/index.html
+"""
+
 
 class ConnectFourGameLogic:
     def __init__(self):
