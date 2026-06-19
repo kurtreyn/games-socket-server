@@ -10,3 +10,11 @@ To run locally:
 Render.com start command: ```
 uvicorn main:app --host 0.0.0.0 --port $PORT```
 
+Update requirements: `pip freeze > requirements.txt
+`
+
+
+Unit Testing:
+- Install testing dependencies: `pip install -r test-requirements.txt`
+- Terminal command: `pytest test_connect_four_manager.py` (example)
+
