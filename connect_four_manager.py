@@ -160,11 +160,11 @@ class ConnectFourManager:
 
     async def handle_game(self, websocket: WebSocket):
         """
-         Traffic controller for incoming connections.
-         Primary objective is to look at the first message
-         a client sends then figure out if they want to start a new game or
-         join an existing one, and then route them to the appropriate handler.
-         """
+        Traffic controller for incoming connections.
+        Primary objective is to look at the first message
+        a client sends then figure out if they want to start a new game or
+        join an existing one, and then route them to the appropriate handler.
+        """
         # 1. Accept the WebSocket connection and wait for the client to send an "init" event
         await websocket.accept()
 
@@ -183,8 +183,24 @@ class ConnectFourManager:
             # 3. Inspect event & route to the appropriate handler based on
             # whether client wants to start a new game or join an existing one
             if StringEnum.JOIN in event:
-                # Second player joins existing game
-                await self.join_game(websocket, event[StringEnum.JOIN])
+                join_key = event[StringEnum.JOIN]
+
+                # 1. Check if the game exists (Fixed 4-space indentation)
+                if join_key not in self.JOIN:
+                    await self.handle_error(websocket, "Game not found.")
+                    return
+
+                # 2. Extract the room's current connection pool
+                _, room_connections = self.JOIN[join_key]
+
+                # 3. Add this websocket to the room's connection pool
+                if len(room_connections) >= 2:
+                    await self.handle_error(websocket, "Game is already full.")
+                    return
+
+                # 4. If all checks pass, add them to the game and start receiving moves
+                await self.join_game(websocket, join_key)
+
             else:
                 # First player starts a new game
                 await self.start_game(websocket)
