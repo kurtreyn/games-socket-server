@@ -12,7 +12,7 @@ chat_manager = ChatManager(connection_manager)
 connect_four_manager = ConnectFourManager()
 
 # TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
-use_production = True
+use_production = False
 
 
 # Handle Render.com health checks
