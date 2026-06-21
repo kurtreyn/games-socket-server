@@ -9,6 +9,12 @@ class IRummyPlayer:
 	hand: List[dict]
 	score: int
 
+@dataclass
+class IMoves:
+	id: str
+	action: str
+	cards: List[dict]
+
 
 @dataclass
 class IRummyGameState:
@@ -16,6 +22,7 @@ class IRummyGameState:
 	current_player_id: str
 	card_deck: List[dict]
 	discard_pile: List[dict]
+	moves: List[dict]
 	is_over: bool
 	winner_id: Optional[str] = None
 
@@ -37,7 +44,8 @@ class RummyGameLogic:
 			IRummyPlayer(id="p2", hand=[], score=0)
 		]
 
-		self.current_player_id: str = "p1"
+		self.moves: List[IMoves] = []  # List to track moves in the format {"id": str, "action": str, "card": dict}
+		self.current_player_id = self.players[0].id  # Start with player 1
 		self.discard_pile: List[dict] = []
 		self.is_over: bool = False
 		self.winner_id: Optional[str] = None
@@ -66,14 +74,34 @@ class RummyGameLogic:
 
 	def draw_from_deck(self, player_id: str) -> Optional[dict]:
 		if self.current_player_id != player_id:
-			raise ValueError("It's not your turn yet.")
+			raise ValueError("It isn't your turn.")
 
 		card = self.deal_card()
 		if card:
 			player = next(p for p in self.players if p.id == player_id)
 			player.hand.append(card)
+			self.moves.append(IMoves(id=player.id, action="draw_from_deck", cards=[card]))
 			return card
 		return None
+
+	def last_player(self):
+		"""
+		Scans backward through game history to find the player who completed
+		the most recent turn with a discard.
+		"""
+		if not self.moves:
+			return None  # No moves have been made yet
+
+		# Loop through the moves list backwards (from newest to oldest)
+		for move in reversed(self.moves):
+			# Handle object format (.action) or dict format (["action"]) depending on your setup
+			action = move.action if hasattr(move, 'action') else move.get("action")
+			player_id = move.id if hasattr(move, 'id') else move.get("id")
+
+			if action == "discard":
+				return next(p for p in self.players if p.id == player_id)
+
+		return None  # Moves exist, but no one has discarded yet (e.g., during initial setup)
 
 	def get_state(self) -> IRummyGameState:
 		"""
@@ -84,6 +112,7 @@ class RummyGameLogic:
 			current_player_id=self.current_player_id,
 			card_deck=self.cards,
 			discard_pile=self.discard_pile,
+			moves=self.moves,
 			is_over=self.is_over,
 			winner_id=self.winner_id
 		)
