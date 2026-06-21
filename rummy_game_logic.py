@@ -25,7 +25,11 @@ class RummyGameLogic:
 		# 1. Build the raw card deck using the values match frontend map ('2_hearts', 'jack_spades', etc.)
 		suits = ["hearts", "diamonds", "clubs", "spades"]
 		ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "jack", "queen", "king", "ace"]
-		self.cards: List[str] = [f"{rank}_{suit}" for suit in suits for rank in ranks]
+		self.cards: List[str] = [
+            {"suit": suit, "rank": rank, "value": f"{rank}_{suit}"}
+            for suit in suits
+            for rank in ranks
+        ]
 
 		# 2. Track game state properties locally using dataclass types
 		self.players = [
