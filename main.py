@@ -14,7 +14,7 @@ connect_four_manager = ConnectFourManager()
 games_manager = GamesManager(connection_manager, connect_four_manager)
 
 # TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
-use_production = False
+use_production = True
 
 
 # Handle Render.com health checks
@@ -38,7 +38,9 @@ async def game_websocket(websocket: WebSocket):
 
 @app.websocket("/connect-four")
 async def connect_four_websocket(websocket: WebSocket):
+    # Pass the broadcast update handler through so the lobby list stays live
     await connect_four_manager.handle_game(websocket)
+    await games_manager.broadcast_lobby_update()
 
 
 if __name__ == "__main__":
