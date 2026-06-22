@@ -1,6 +1,4 @@
 from fastapi import WebSocket, WebSocketDisconnect
-
-import games_manager
 from connect_four_game_logic import ConnectFourGameLogic, PLAYER1, PLAYER2
 from string_enum import StringEnum
 import json
@@ -77,7 +75,6 @@ class ConnectFourManager:
             event = {
                 StringEnum.TYPE: StringEnum.INIT,
                 StringEnum.JOIN: join_key,
-                StringEnum.JOIN_URL: f"http://localhost:8000/?join=/{join_key}",
                 StringEnum.PLAYER_COUNT: len(room_connections),
             }
             print(f"def start_game - event: {event}")

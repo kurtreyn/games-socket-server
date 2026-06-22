@@ -6,12 +6,14 @@ from connection_manager import ConnectionManager
 from chat_manager import ChatManager
 from connect_four_manager import ConnectFourManager
 from games_manager import GamesManager
+from rummy_manager import RummyManager
 
 app = FastAPI()
 connection_manager = ConnectionManager()
 chat_manager = ChatManager(connection_manager)
 connect_four_manager = ConnectFourManager()
-games_manager = GamesManager(connection_manager, connect_four_manager)
+rummy_manager = RummyManager()
+games_manager = GamesManager(connection_manager, connect_four_manager, rummy_manager)
 
 # TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
 use_production = False
@@ -40,6 +42,12 @@ async def game_websocket(websocket: WebSocket):
 async def connect_four_websocket(websocket: WebSocket):
     # Pass the broadcast update handler through so the lobby list stays live
     await connect_four_manager.handle_game(websocket)
+    await games_manager.broadcast_lobby_update()
+
+
+@app.websocket("/rummy")
+async def rummy_websocket(websocket: WebSocket):
+    await rummy_manager.handle_game(websocket)
     await games_manager.broadcast_lobby_update()
 
 
