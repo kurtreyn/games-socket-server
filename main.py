@@ -32,7 +32,7 @@ async def chat_websocket(websocket: WebSocket):
 
 @app.websocket("/games")
 async def game_websocket(websocket: WebSocket):
-    # ✅ Let the manager handle connections natively
+    # Let the manager handle connections natively
     await games_manager.handle_lobby_stream(websocket)
 
 
