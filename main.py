@@ -5,11 +5,13 @@ import uvicorn
 from connection_manager import ConnectionManager
 from chat_manager import ChatManager
 from connect_four_manager import ConnectFourManager
+from games_manager import GamesManager
 
 app = FastAPI()
 connection_manager = ConnectionManager()
 chat_manager = ChatManager(connection_manager)
 connect_four_manager = ConnectFourManager()
+games_manager = GamesManager(connection_manager, connect_four_manager)
 
 # TOGGLE BETWEEN LOCAL DEVELOPMENT AND PRODUCTION RENDER.COM ENVIRONMENT
 use_production = False
@@ -26,6 +28,12 @@ async def health_check():
 @app.websocket("/chat")
 async def chat_websocket(websocket: WebSocket):
     await chat_manager.handle_websocket_chat(websocket)
+
+
+@app.websocket("/games")
+async def game_websocket(websocket: WebSocket):
+    # ✅ Let the manager handle connections natively
+    await games_manager.handle_lobby_stream(websocket)
 
 
 @app.websocket("/connect-four")
