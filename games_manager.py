@@ -1,6 +1,7 @@
 from fastapi import WebSocket, WebSocketDisconnect
 from connection_manager import ConnectionManager
 
+
 class GamesManager:
     def __init__(self, connection_manager: ConnectionManager, connect_four_mgr):
         self.connection_manager = connection_manager
