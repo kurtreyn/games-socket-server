@@ -1,5 +1,6 @@
 from fastapi import WebSocket, WebSocketDisconnect
-from connection_manager import ConnectionManager
+from typing import Callable, Awaitable
+from games_manager import GamesManager
 from connect_four_game_logic import ConnectFourGameLogic, PLAYER1, PLAYER2
 from string_enum import StringEnum
 import json
@@ -57,9 +58,15 @@ class ConnectFourManager:
             # Receive and process moves from the second player.
             await self.play_game(websocket, game_logic, PLAYER2, room_connections)
         finally:
-            room_connections.remove(websocket)
+            # Safe Cleanup: Remove this specific socket link
+            if websocket in room_connections:
+                room_connections.remove(websocket)
 
-    async def start_game(self, websocket: WebSocket):
+            if len(room_connections) == 0:
+                if join_key in self.JOIN:
+                    del self.JOIN[join_key]
+
+    async def start_game(self, websocket: WebSocket, on_game_created: Callable[[], Awaitable[None]]):
         # Initialize a Connect Four game and secret access tokens.
         game_logic = ConnectFourGameLogic()
         room_connections = {websocket}
@@ -70,13 +77,16 @@ class ConnectFourManager:
         print(f"def start_game - join_key: {join_key}")
         print(f"def start_game - JOIN[join_key]: {self.JOIN[join_key]}")
 
+        # Trigger callback. This tells GamesManager to scan the room list and update everyone
+        await on_game_created()
+
         try:
             # Send the secret access tokens to the browser of the first player,
             # where they'll be used for building "join" link.
             event = {
                 StringEnum.TYPE: StringEnum.INIT,
                 StringEnum.JOIN: join_key,
-                StringEnum.JOIN_URL: f"http://localhost:8000/?join=/{join_key}",
+                # StringEnum.JOIN_URL: f"http://localhost:8000/?join=/{join_key}",
                 StringEnum.PLAYER_COUNT: len(room_connections),
             }
             print(f"def start_game - event: {event}")
@@ -86,7 +96,17 @@ class ConnectFourManager:
             # Receive and process moves from the first player.
             await self.play_game(websocket, game_logic, PLAYER1, room_connections)
         finally:
-            del self.JOIN[join_key]
+            # 🧼 Safe Cleanup: Remove this specific socket link
+            if websocket in room_connections:
+                room_connections.remove(websocket)
+
+            # Only delete the global lookup if EVERYONE has dropped
+            if len(room_connections) == 0:
+                if join_key in self.JOIN:
+                    del self.JOIN[join_key]
+
+            # Trigger again when game ends so the room drops off the lobby listing
+            await on_game_created()
 
     async def play_game(self, websocket: WebSocket, game_logic: ConnectFourGameLogic, player: str, room_connections: set):
         try:
@@ -158,7 +178,7 @@ class ConnectFourManager:
             }
             await websocket.send_json(event)
 
-    async def handle_game(self, websocket: WebSocket):
+    async def handle_game(self, websocket: WebSocket, on_game_created: Callable[[], Awaitable[None]]):
         """
         Traffic controller for incoming connections.
         Primary objective is to look at the first message
@@ -200,6 +220,8 @@ class ConnectFourManager:
 
                 # 4. If all checks pass, add them to the game and start receiving moves
                 await self.join_game(websocket, join_key)
+                # Trigger an update because player count changed from 1 to 2 (room is now full/hidden)
+                await on_game_created()
 
             else:
                 # First player starts a new game
