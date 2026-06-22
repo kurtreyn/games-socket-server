@@ -10,7 +10,6 @@ import secrets
 class ConnectFourManager:
     def __init__(self):
         self.JOIN = {}  # Maps join_key to (game_logic, set of connected websockets)
-        self.join_keys = []
 
     async def broadcast_to_room(self, room_connections: set, event: dict):
         for connection in room_connections:
@@ -67,7 +66,6 @@ class ConnectFourManager:
         room_connections = {websocket}
         join_key = secrets.token_urlsafe(12)
 
-        self.join_keys.append(join_key)
         self.JOIN[join_key] = game_logic, room_connections
         print(f"def start_game - game_logic: {game_logic}")
         print(f"def start_game - join_key: {join_key}")
