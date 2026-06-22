@@ -13,23 +13,18 @@ class GamesManager:
         print(f"Lobby Listener Connected. Total listeners: {len(self.connection_manager.connections)}")
 
         try:
-            # Send current active matches instantly on setup
-            connect_four_lobby_state = self._get_lobby_state("connect_four")
-            rummy_lobby_state = self._get_lobby_state("rummy")
-            print(f"connect_four_lobby_state: {connect_four_lobby_state}")
-            print(f"rummy_lobby_state: {rummy_lobby_state}")
+            # 1. Fetch the raw open rooms for both games safely
+            c4_rooms = self._get_open_rooms("connect_four")
+            rummy_rooms = self._get_open_rooms("rummy")
+
+            # 2. Combine them seamlessly into a single consolidated array
             all_games_lobby_state = {
                 "type": "games_available",
-                "games_available": []
+                "games_available": c4_rooms + rummy_rooms  # Safely merges lists even if they're empty!
             }
-            all_games_lobby_state["games_available"].append(connect_four_lobby_state["games_available"][0])
-            # all_games_lobby_state["games_available"].append(rummy_lobby_state["games_available"][0])
-            print(f"all_games_lobby_state: {all_games_lobby_state}")
-            await websocket.send_json(connect_four_lobby_state)
-            # await websocket.send_json(self._get_lobby_state("rummy"))
 
-
-
+            print(f"Unified Lobby Broadcast Payload: {all_games_lobby_state}")
+            await websocket.send_json(all_games_lobby_state)
 
             while True:
                 await websocket.receive_text()
@@ -40,7 +35,23 @@ class GamesManager:
 
     async def broadcast_lobby_update(self):
         """Call this whenever a game is created or destroyed to update all listening clients."""
-        await self.connection_manager.broadcast(self._get_lobby_state())
+        unified_state = {
+            "type": "games_available",
+            "games_available": self._get_open_rooms("connect_four") + self._get_open_rooms("rummy")
+        }
+        await self.connection_manager.broadcast(unified_state)
+
+    def _get_open_rooms(self, game_type) -> list:
+        """Helper to return an array of available rooms for a specific game type."""
+        mgr = self.connect_four_mgr if game_type == "connect_four" else self.rummy_mgr
+
+        # Extract keys where room connections are less than 2
+        available_keys = [
+            key for key, (game_logic, room_connections) in mgr.JOIN.items()
+            if len(room_connections) < 2
+        ]
+        # Return a flat list of room dictionaries
+        return [{"game": game_type, "join_key": key} for key in available_keys]
 
     def _get_lobby_state(self, game: str) -> dict:
         """Helper to compile currently joinable game rooms directly from memory state."""
